@@ -24,6 +24,10 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
 
+    // Decorators (needed for sequelize-typescript)
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
     // Style Options
     // "noImplicitReturns": true,
     // "noImplicitOverride": true,
@@ -35,7 +39,6 @@
     // Recommended Options
     "strict": true,
     "jsx": "react-jsx",
-
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
