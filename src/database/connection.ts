@@ -12,13 +12,13 @@ try {
       console.log("Database connection successful");
     })
     .catch((err) => {
-      console.log("Error aayo", err);
+      console.log("DB connection error:", err);
     });
 } catch (error) {
   console.log(error);
 }
 
-sequelize.sync({ alter: false }).then(() => {
+sequelize.sync({ alter: true }).then(() => {
   console.log("Migrated!!!");
 });
 
