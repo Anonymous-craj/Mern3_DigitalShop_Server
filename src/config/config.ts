@@ -6,4 +6,6 @@ export const envConfig = {
   connectionString: process.env.CONNECTION_STRING,
   jwtSecretKey: process.env.JWT_SECRET_KEY || "hehehe",
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "1d",
+  email: process.env.EMAIL,
+  emailPassword: process.env.EMAIL_PASSWORD,
 };
