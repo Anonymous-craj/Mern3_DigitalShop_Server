@@ -36,12 +36,20 @@ class User extends Model {
 
   @Column({
     type: DataType.STRING,
+    allowNull: true,
   })
-  declare otp: string;
+  declare otp: string | null;
 
   @Column({
     type: DataType.STRING,
+    allowNull: true,
   })
-  declare otpGeneratedTime: string;
+  declare otpGeneratedTime: string | null;
+
+  @Column({
+    type: DataType.BOOLEAN,
+    defaultValue: false,
+  })
+  declare isOtpVerified: boolean | null;
 }
 export default User;

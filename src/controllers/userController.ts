@@ -111,8 +111,104 @@ class UserController {
       text: `You requested for password reset, here is your otp: ${otp}`,
     });
 
+    userExist.otp = otp.toString();
+    userExist.otpGeneratedTime = Date.now().toString();
+    await userExist.save();
+
     res.status(200).json({
       message: "OTP sent!!!",
+    });
+  }
+
+  //OTP Verification
+
+  static async verifyOtp(req: Request, res: Response) {
+    const { email, otp } = req.body || {};
+    if (!email || !otp) {
+      res.status(400).json({
+        message: "Email and OTP are required!",
+      });
+      return;
+    }
+
+    //Checking is the user with the email is registered in User table!
+
+    const [userExist] = await User.findAll({
+      where: {
+        email: email,
+      },
+    });
+
+    if (!userExist) {
+      res.status(404).json({
+        message: "User with the above email isn't registered!",
+      });
+      return;
+    }
+
+    //Checking the incoming otp from postman with the otp which is stored in User table
+    if (userExist.otp !== otp) {
+      res.status(400).json({
+        message: "Invalid OTP!!!",
+      });
+      return;
+    }
+    //Disposing otp once it is used and also verifying otp!
+    userExist.otp = null;
+    userExist.otpGeneratedTime = null;
+    userExist.isOtpVerified = true;
+    await userExist.save();
+
+    res.status(200).json({
+      message: "OTP is correct!",
+    });
+  }
+
+  //Handling password Reset
+  static async handleResetPassword(req: Request, res: Response) {
+    const { email, newPassword, confirmPassword } = req.body || {};
+
+    if (!email || !newPassword || !confirmPassword) {
+      res.status(400).json({
+        message: "All fields are required!",
+      });
+      return;
+    }
+
+    //Finding if the user with that email is registered in our table
+    const [user] = await User.findAll({
+      where: {
+        email,
+      },
+    });
+    if (!user) {
+      res.status(404).json({
+        message: "User with the above email isn't registered!",
+      });
+      return;
+    }
+
+    //Validating newPassword and confirmPassword fields
+    if (newPassword !== confirmPassword) {
+      res.status(400).json({
+        message: "newPassword and confirmPassword doesn't match",
+      });
+      return;
+    }
+
+    //Checking if the otp is verified or not, if it's unverified the user cannot reset the password
+    if (user.isOtpVerified !== true) {
+      res.status(400).json({
+        message: "You cannot perform this action",
+      });
+    }
+
+    user.password = bcrypt.hashSync(newPassword, 10);
+    user.isOtpVerified = false;
+    await user.save();
+
+    res.status(200).json({
+      message: "Password reset successfull!!",
     });
   }
 }
