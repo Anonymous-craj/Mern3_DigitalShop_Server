@@ -18,7 +18,7 @@ try {
   console.log(error);
 }
 
-sequelize.sync({ alter: true }).then(() => {
+sequelize.sync({ force: false, alter: false }).then(() => {
   console.log("Migrated!!!");
 });
 

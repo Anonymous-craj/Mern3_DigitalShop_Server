@@ -17,6 +17,18 @@ class UserController {
       });
       return;
     }
+
+    const [data] = await User.findAll({
+      where: {
+        email,
+      },
+    });
+    if (data) {
+      res.status(400).json({
+        message: "Please try again later!!",
+      });
+    }
+
     //Inserting data into users table
 
     await User.create({
@@ -142,6 +154,14 @@ class UserController {
     if (!userExist) {
       res.status(404).json({
         message: "User with the above email isn't registered!",
+      });
+      return;
+    }
+
+    //Check if OTP exists
+    if (!userExist.otp || !userExist.otpGeneratedTime) {
+      res.status(400).json({
+        message: "OTP not found! Please request again.",
       });
       return;
     }
