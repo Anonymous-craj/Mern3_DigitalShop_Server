@@ -25,7 +25,7 @@ class CategoryController {
 
   //Read Categories
   static async fetchCategories(req: Request, res: Response): Promise<void> {
-    const [data] = await Category.findAll();
+    const data = await Category.findAll();
 
     res.status(200).json({
       message: "Fetched categories successfully!",
@@ -36,7 +36,7 @@ class CategoryController {
   //Add Categories
 
   static async addCategory(req: Request, res: Response): Promise<void> {
-    const { categoryName } = req.body;
+    const { categoryName } = req.body || {};
 
     if (!categoryName) {
       res.status(400).json({
