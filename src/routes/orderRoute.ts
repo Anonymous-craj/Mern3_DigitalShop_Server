@@ -11,4 +11,11 @@ router
     errorHandler(OrderController.createOrder)
   );
 
+router
+  .route("/verify-pidx")
+  .post(
+    UserMiddleware.isUserLoggedIn,
+    errorHandler(OrderController.verifyTransaction)
+  );
+
 export default router;
