@@ -6,6 +6,7 @@ import Order from "./models/orderModel";
 import User from "./models/userModel";
 import Payment from "./models/paymentModel";
 import OrderDetails from "./models/orderDetails";
+import Cart from "./models/cartModel";
 
 const sequelize = new Sequelize(envConfig.connectionString as string, {
   models: [__dirname + "/models"],
@@ -43,6 +44,14 @@ Order.hasMany(OrderDetails, { foreignKey: "orderId" });
 //Relation between OrderDetails and Product
 OrderDetails.belongsTo(Product, { foreignKey: "productId" });
 Product.hasMany(OrderDetails, { foreignKey: "productId" });
+
+//Relationship between cart and user
+Cart.belongsTo(User, { foreignKey: "userId" });
+User.hasOne(Cart, { foreignKey: "userId" });
+
+//Relationship between cart and product
+Cart.belongsTo(Product, { foreignKey: "productId" });
+Product.hasMany(Cart, { foreignKey: "productId" });
 
 sequelize.sync({ force: false, alter: false }).then(() => {
   console.log("Migrated!!!");
