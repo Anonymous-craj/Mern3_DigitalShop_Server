@@ -5,6 +5,8 @@ import CategoryController from "./src/controllers/categoryController";
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import User from "./src/database/models/userModel";
+import Order from "./src/database/models/orderModel";
+import { OrderStatus } from "./src/globals/types";
 function startServer() {
   const port = envConfig.port || 4000;
   const server = app.listen(port, () => {
@@ -51,10 +53,20 @@ function startServer() {
       socket.emit("error", "Please provide token!");
     }
 
-    socket.on("updateOrderStatus", (data) => {
+    socket.on("updateOrderStatus", async (data) => {
       const { status, orderId, userId } = data;
       //Check if the userId is in our onlineUsers Array
       const findUser = onlineUsers.find((user) => user.userId); //(socketId, userId, role)
+      await Order.update(
+        {
+          orderStatus: status,
+        },
+        {
+          where: {
+            id: orderId,
+          },
+        }
+      );
       if (findUser) {
         io.to(findUser.socketId).emit(
           "success",
