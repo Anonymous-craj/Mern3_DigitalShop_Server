@@ -17,12 +17,6 @@ class Order extends Model {
   @Column({
     type: DataType.STRING,
     allowNull: false,
-  })
-  declare shippingAddress: string;
-
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
     validate: {
       len: {
         args: [10, 10],
@@ -37,6 +31,47 @@ class Order extends Model {
     allowNull: false,
   })
   declare totalAmount: number;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    defaultValue: "Anonymous",
+  })
+  declare firstName: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    defaultValue: "Anonymous",
+  })
+  declare lastName: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+    defaultValue: "anonymous@gmail.com",
+  })
+  declare email: string;
+
+  @Column({
+    type: DataType.STRING,
+  })
+  declare AddressLine: string;
+
+  @Column({
+    type: DataType.STRING,
+  })
+  declare City: string;
+
+  @Column({
+    type: DataType.STRING,
+  })
+  declare State: string;
+
+  @Column({
+    type: DataType.STRING,
+  })
+  declare zipCode: string;
 
   @Column({
     type: DataType.ENUM(

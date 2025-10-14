@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Cart from "../database/models/cartModel";
 import Product from "../database/models/productModel";
+import Category from "../database/models/categoryModel";
 
 interface AuthRequest extends Request {
   user?: {
@@ -20,7 +21,9 @@ class CartController {
       return;
     }
 
-    const cartDataAlreadyExists = await Cart.findOne();
+    const cartDataAlreadyExists = await Cart.findOne({
+      where: { userId, productId },
+    });
 
     if (cartDataAlreadyExists) {
       cartDataAlreadyExists.quantity += quantity;
@@ -32,8 +35,25 @@ class CartController {
         quantity,
       });
     }
+
+    const cartItems = await Cart.findAll({
+      where: {
+        userId,
+      },
+      include: [
+        {
+          model: Product,
+          include: [
+            {
+              model: Category,
+            },
+          ],
+        },
+      ],
+    });
     res.status(200).json({
       message: "Items added to cart successfull!",
+      data: cartItems,
     });
   }
 
