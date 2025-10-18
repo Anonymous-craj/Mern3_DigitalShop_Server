@@ -1,14 +1,26 @@
 import express, { Router } from "express";
 import OrderController from "../controllers/orderController";
 import errorHandler from "../services/errorHandler";
-import UserMiddleware from "../middleware/userMiddleware";
+import UserMiddleware, { Role } from "../middleware/userMiddleware";
 const router: Router = express.Router();
 
 router
   .route("/")
+  .get(
+    UserMiddleware.isUserLoggedIn,
+    errorHandler(OrderController.fetchMyOrders)
+  )
   .post(
     UserMiddleware.isUserLoggedIn,
     errorHandler(OrderController.createOrder)
+  );
+
+router
+  .route("/cancel-order/:id")
+  .patch(
+    UserMiddleware.isUserLoggedIn,
+    UserMiddleware.accessTo(Role.Customer),
+    errorHandler(OrderController.cancelMyOrder)
   );
 
 router
@@ -16,6 +28,13 @@ router
   .post(
     UserMiddleware.isUserLoggedIn,
     errorHandler(OrderController.verifyTransaction)
+  );
+
+router
+  .route("/:id")
+  .get(
+    UserMiddleware.isUserLoggedIn,
+    errorHandler(OrderController.fetchMyOrderDetail)
   );
 
 export default router;

@@ -34,8 +34,8 @@ Order.belongsTo(User, { foreignKey: "userId" });
 User.hasMany(Order, { foreignKey: "userId" });
 
 //Relation between Payment and Order
-Payment.belongsTo(Order, { foreignKey: "orderId" });
-Order.hasOne(Payment, { foreignKey: "orderId" });
+Order.belongsTo(Payment, { foreignKey: "paymentId" });
+Payment.hasOne(Order, { foreignKey: "paymentId" });
 
 //Relation between OrderDetails and Order
 OrderDetails.belongsTo(Order, { foreignKey: "orderId" });
