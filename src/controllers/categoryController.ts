@@ -45,11 +45,12 @@ class CategoryController {
       return;
     }
 
-    await Category.create({
+    const categories = await Category.create({
       categoryName,
     });
     res.status(201).json({
       message: "Category created successfully!",
+      data: categories,
     });
   }
 
