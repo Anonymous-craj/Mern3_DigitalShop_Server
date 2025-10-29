@@ -193,6 +193,27 @@ class UserController {
       return;
     }
 
+    // ---- EXPIRY CHECK (2 minutes) ----
+    const OTP_EXPIRY_MS = 2 * 60 * 1000; // 2 minutes
+    // We stored a millisecond epoch string; if you later change storage, also support ISO by fallback parse:
+    const issuedAtMs =
+      Number(userExist.otpGeneratedTime) ||
+      new Date(userExist.otpGeneratedTime as string).getTime();
+
+    // If parsing failed or expired:
+    if (!issuedAtMs || Date.now() - issuedAtMs > OTP_EXPIRY_MS) {
+      // Invalidate the OTP so it can't be reused
+      userExist.otp = null;
+      userExist.otpGeneratedTime = null;
+      userExist.isOtpVerified = false;
+      await userExist.save();
+      res
+        .status(400)
+        .json({ message: "OTP expired. Please request a new one." });
+      return;
+    }
+    // ---- /EXPIRY CHECK ----
+
     //Checking the incoming otp from postman with the otp which is stored in User table
     if (userExist.otp !== otp) {
       res.status(400).json({
