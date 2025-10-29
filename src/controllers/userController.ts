@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import { generateToken } from "../services/generateToken";
 import generateOtp from "../services/generateOtp";
 import sendMail from "../services/sendMail";
+import { UniqueConstraintError } from "sequelize";
 
 class UserController {
   //User Registration
@@ -18,34 +19,59 @@ class UserController {
       return;
     }
 
-    const [data] = await User.findAll({
-      where: {
-        email,
-      },
-    });
-    if (data) {
-      res.status(400).json({
-        message: "Please try again later!!",
+    // Password validation (backend side)
+    if (password.length < 8) {
+      return res.status(400).json({
+        message: "Password must be at least 8 characters.",
       });
     }
 
-    //Inserting data into users table
+    try {
+      const [data] = await User.findAll({
+        where: {
+          email,
+        },
+      });
+      if (data) {
+        res.status(400).json({
+          message: "Please try again later!!",
+        });
+        return;
+      }
+      // Inserting data into users table
+      await User.create({
+        username,
+        email,
+        password: bcrypt.hashSync(password, 10), // Hashing password into database using bcrypt
+      });
 
-    await User.create({
-      username: username,
-      email: email,
-      password: bcrypt.hashSync(password, 10), //Hashing password into database using bcrypt package which uses blowfish algorithm
-    });
+      // Send registration success email
+      await sendMail({
+        to: email,
+        subject: "Registration successful on Digital Shop!",
+        text: "Welcome to Digital Shop, Thank you for registering!",
+      });
 
-    await sendMail({
-      to: email,
-      subject: "Registration successful on Digital Shop!",
-      text: "Welcome to Digital Shop, Thank You for registering!",
-    });
+      // Respond with success message
+      res.status(201).json({
+        message: "User registered successfully!",
+      });
+    } catch (error) {
+      // Catch and handle Sequelize unique constraint error (email already exists)
+      if (error instanceof UniqueConstraintError) {
+        res.status(400).json({
+          message:
+            "This email is already registered. Please try a different email.",
+        });
+        return;
+      }
 
-    res.status(201).json({
-      message: "User registered successfully!",
-    });
+      // Catch other errors (e.g., validation errors, unexpected errors)
+      console.error(error);
+      res.status(500).json({
+        message: "An error occurred during registration. Please try again.",
+      });
+    }
   }
 
   //User login
@@ -71,6 +97,7 @@ class UserController {
       res.status(404).json({
         message: "No user found with that email!",
       });
+      return;
     } else {
       //if yes--> email exists --> check password too!
       const isEqual = bcrypt.compareSync(password, user.password);

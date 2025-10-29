@@ -16,6 +16,14 @@ router
   );
 
 router
+  .route("/all")
+  .get(
+    UserMiddleware.isUserLoggedIn,
+    UserMiddleware.accessTo(Role.Admin),
+    errorHandler(OrderController.fetchAllOrders)
+  );
+
+router
   .route("/cancel-order/:id")
   .patch(
     UserMiddleware.isUserLoggedIn,

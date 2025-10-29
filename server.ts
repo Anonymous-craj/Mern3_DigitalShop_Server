@@ -15,7 +15,11 @@ function startServer() {
     adminSeeder();
   });
 
-  const io = new Server(server); //Passing argument http request in the Server class because the first request is always a http request before connecting in websocket(Three way handshake)
+  const io = new Server(server, {
+    cors: {
+      origin: "*",
+    },
+  }); //Passing argument http request in the Server class because the first request is always a http request before connecting in websocket(Three way handshake)
 
   //Made an array onLineUsers to track users if they are online as soon as they connect with our project
   let onlineUsers: { socketId: string; userId: string; role: string }[] = [];
@@ -26,7 +30,7 @@ function startServer() {
 
   //websocket connection
   io.on("connection", (socket) => {
-    const token = socket.handshake.headers.token; //jwt
+    const { token } = socket.handshake.auth; //jwt
 
     //Checking if the token provided is legit or not
     if (token) {
@@ -68,10 +72,7 @@ function startServer() {
         }
       );
       if (findUser) {
-        io.to(findUser.socketId).emit(
-          "success",
-          "OrderStatus Updated Successfully!"
-        );
+        io.to(findUser.socketId).emit("statusUpdated", data);
         console.log(findUser);
       } else {
         socket.emit("error", "User is not online!");

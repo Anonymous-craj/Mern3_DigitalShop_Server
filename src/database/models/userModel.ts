@@ -20,6 +20,8 @@ class User extends Model {
 
   @Column({
     type: DataType.STRING,
+    unique: true,
+    validate: { isEmail: true },
   })
   declare email: string;
 
