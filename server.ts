@@ -17,7 +17,11 @@ function startServer() {
 
   const io = new Server(server, {
     cors: {
-      origin: "https://digital-shop-blond.vercel.app/",
+      origin: [
+        "https://digital-shop-blond.vercel.app",
+        "digital-shop-git-main-siraj-basnets-projects.vercel.app",
+        "digital-shop-i1j7xbybg-siraj-basnets-projects.vercel.app",
+      ],
     },
   }); //Passing argument http request in the Server class because the first request is always a http request before connecting in websocket(Three way handshake)
 

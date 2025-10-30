@@ -10,7 +10,7 @@ import orderRoute from "./routes/orderRoute";
 import cartRoute from "./routes/cartRoute";
 app.use(
   cors({
-    origin: "https://digital-shop-blond.vercel.app/",
+    origin: "https://digital-shop-blond.vercel.app",
   })
 );
 app.use(express.json());
