@@ -1,4 +1,6 @@
 import express from "express";
+import path from "path";
+import fs from "fs";
 const app = express();
 
 import "./database/connection";
@@ -31,6 +33,10 @@ app.use("/api/product", productRoute);
 app.use("/api/order", orderRoute);
 app.use("/api/cart", cartRoute);
 app.disable("etag");
+
+// keep uploads next to the compiled server (dist/uploads) OR at project root
+const UPLOAD_DIR = path.resolve(process.cwd(), "uploads"); // project-root/uploads
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 app.use(express.static("./src/uploads"));
 
