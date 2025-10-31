@@ -3,84 +3,95 @@ import app from "./src/app";
 import { envConfig } from "./src/config/config";
 import CategoryController from "./src/controllers/categoryController";
 import { Server } from "socket.io";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload, VerifyErrors, Secret } from "jsonwebtoken";
 import User from "./src/database/models/userModel";
 import Order from "./src/database/models/orderModel";
 import { OrderStatus } from "./src/globals/types";
+import http from "http";
+
 function startServer() {
   const port = envConfig.port || 4000;
-  const server = app.listen(port, () => {
+  const httpServer = http.createServer(app); // use http.Server, not express.listen()
+
+  const io = new Server(httpServer, {
+    cors: {
+      origin: [
+        "http://localhost:5173", // local dev frontend
+        "https://digital-shop-blond.vercel.app", // your live Vercel frontend
+      ],
+      methods: ["GET", "POST"],
+      allowedHeaders: ["Authorization", "Content-Type"],
+      credentials: false,
+    },
+    transports: ["websocket", "polling"], // help with Render websocket upgrade
+    path: "/socket.io", // ensure consistent path
+  });
+
+  httpServer.listen(port, () => {
+    console.log(`✅ Server has started at port [${port}]`);
     CategoryController.seedCategory();
-    console.log(`Server has started at port[${port}]`);
     adminSeeder();
   });
 
-  const io = new Server(server, {
-    cors: {
-      origin: [
-        "https://digital-shop-blond.vercel.app",
-        "digital-shop-git-main-siraj-basnets-projects.vercel.app",
-        "digital-shop-i1j7xbybg-siraj-basnets-projects.vercel.app",
-      ],
-    },
-  }); //Passing argument http request in the Server class because the first request is always a http request before connecting in websocket(Three way handshake)
-
-  //Made an array onLineUsers to track users if they are online as soon as they connect with our project
+  // 🟢 Track online users
   let onlineUsers: { socketId: string; userId: string; role: string }[] = [];
-  let addToOnlineUsers = (socketId: string, userId: string, role: string) => {
+
+  const addToOnlineUsers = (socketId: string, userId: string, role: string) => {
     onlineUsers = onlineUsers.filter((user) => user.userId !== userId);
     onlineUsers.push({ socketId, userId, role });
   };
 
-  //websocket connection
+  // 🟣 Socket.IO connection handler
   io.on("connection", (socket) => {
-    const { token } = socket.handshake.auth; //jwt
+    const { token } = socket.handshake.auth || {};
 
-    //Checking if the token provided is legit or not
     if (token) {
-      console.log(token);
-
       jwt.verify(
-        token as string,
-        envConfig.jwtSecretKey,
-        async (err, result: any) => {
+        token,
+        envConfig.jwtSecretKey as Secret,
+        async (
+          err: VerifyErrors | null,
+          decoded: JwtPayload | string | undefined
+        ) => {
           if (err) {
-            socket.emit("error", err);
-          } else {
-            const userData = await User.findByPk(result.userId); //User data find garerw dinxa(email, password, role)
-            if (!userData) {
-              socket.emit("error", "No user with that id!");
-              return;
-            }
-            //If token is verified grab userId
-            addToOnlineUsers(socket.id, result.userId, userData.role);
+            console.error("❌ Invalid token:", err.message);
+            socket.emit("error", "Invalid token");
+            return;
           }
+          const payload = decoded as JwtPayload; // if you sign with an object
+          const userId = payload.userId as string;
+
+          const userData = await User.findByPk(userId);
+          if (!userData) {
+            socket.emit("error", "No user found with this ID");
+            return;
+          }
+
+          addToOnlineUsers(socket.id, userId, userData.role);
+          console.log(`🟢 ${userData.role} connected: ${userData.username}`);
         }
       );
     } else {
-      socket.emit("error", "Please provide token!");
+      socket.emit("error", "Please provide a valid token!");
     }
 
     socket.on("updateOrderStatus", async (data) => {
       const { status, orderId, userId } = data;
-      //Check if the userId is in our onlineUsers Array
-      const findUser = onlineUsers.find((user) => user.userId); //(socketId, userId, role)
-      await Order.update(
-        {
-          orderStatus: status,
-        },
-        {
-          where: {
-            id: orderId,
-          },
-        }
-      );
+      const findUser = onlineUsers.find((user) => user.userId === userId);
+
+      await Order.update({ orderStatus: status }, { where: { id: orderId } });
+
       if (findUser) {
         io.to(findUser.socketId).emit("statusUpdated", data);
-        console.log(findUser);
+        console.log(`🔄 Status updated for user ${userId}`);
       } else {
         socket.emit("error", "User is not online!");
       }
+    });
+
+    socket.on("disconnect", () => {
+      onlineUsers = onlineUsers.filter((user) => user.socketId !== socket.id);
+      console.log(`🔴 Socket disconnected: ${socket.id}`);
     });
   });
 }

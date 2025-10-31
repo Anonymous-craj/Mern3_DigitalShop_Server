@@ -8,9 +8,17 @@ import categoryRoute from "./routes/categoryRoute";
 import productRoute from "./routes/productRoutes";
 import orderRoute from "./routes/orderRoute";
 import cartRoute from "./routes/cartRoute";
+const allowedOrigins = [
+  "http://localhost:5173", // Vite dev (if you use it)
+  "https://digital-shop-blond.vercel.app", // your production frontend
+];
+
 app.use(
   cors({
-    origin: "https://digital-shop-blond.vercel.app",
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: false, // you're not using cookies; keep false
   })
 );
 app.use(express.json());
