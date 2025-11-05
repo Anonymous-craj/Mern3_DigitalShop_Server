@@ -9,7 +9,25 @@ import OrderDetails from "./models/orderDetails";
 import Cart from "./models/cartModel";
 
 const sequelize = new Sequelize(envConfig.connectionString as string, {
+  // Good defaults for Render
+  logging: false,
   models: [__dirname + "/models"],
+  dialectOptions: {
+    // ✅ Force IPv4 to avoid ENETUNREACH to IPv6 hosts
+    family: 4,
+
+    // ✅ Require SSL for managed Postgres (Render, etc.)
+    ssl: {
+      require: true,
+      rejectUnauthorized: false, // OK for managed certs
+    },
+  },
+  pool: {
+    max: 10,
+    min: 0,
+    idle: 10000,
+    acquire: 30000,
+  },
 });
 
 try {
