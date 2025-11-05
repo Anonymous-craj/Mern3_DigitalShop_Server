@@ -10,23 +10,21 @@ import categoryRoute from "./routes/categoryRoute";
 import productRoute from "./routes/productRoutes";
 import orderRoute from "./routes/orderRoute";
 import cartRoute from "./routes/cartRoute";
-const allowedOrigins = [
-  "http://localhost:5173", // Vite dev (if you use it)
-  "https://digital-shop-blond.vercel.app", // your production frontend
-];
 
 app.use(
   cors({
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: false, // you're not using cookies; keep false
+    origin: [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://localhost:3000",
+      "https://digital-shop-blond.vercel.app",
+    ],
   })
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// http://localhost:3000
+// http://localhost:8000
 app.use("/api", userRoute);
 app.use("/api/category", categoryRoute);
 app.use("/api/product", productRoute);
