@@ -7,7 +7,10 @@ import jwt from "jsonwebtoken";
 import User from "./src/database/models/userModel";
 import Order from "./src/database/models/orderModel";
 import { OrderStatus } from "./src/globals/types";
-function startServer() {
+import { initDB } from "./src/database/connection";
+async function startServer() {
+  await initDB();
+
   const port = envConfig.port || 4000;
   const server = app.listen(port, () => {
     CategoryController.seedCategory();
