@@ -7,10 +7,7 @@ import jwt from "jsonwebtoken";
 import User from "./src/database/models/userModel";
 import Order from "./src/database/models/orderModel";
 import { OrderStatus } from "./src/globals/types";
-import { initDB } from "./src/database/connection";
-async function startServer() {
-  await initDB();
-
+function startServer() {
   const port = envConfig.port || 4000;
   const server = app.listen(port, () => {
     CategoryController.seedCategory();
@@ -20,20 +17,7 @@ async function startServer() {
 
   const io = new Server(server, {
     cors: {
-      origin: (origin, cb) => {
-        const allowList = [
-          "http://localhost:5173",
-          "http://127.0.0.1:5173",
-          "http://localhost:3000",
-          "https://digital-shop-blond.vercel.app",
-        ];
-        if (!origin) return cb(null, true); // SSR/tools
-        if (allowList.includes(origin) || /\.vercel\.app$/.test(origin)) {
-          return cb(null, true);
-        }
-        return cb(new Error("Not allowed by CORS"));
-      },
-      credentials: true,
+      origin: "*",
     },
   }); //Passing argument http request in the Server class because the first request is always a http request before connecting in websocket(Three way handshake)
 

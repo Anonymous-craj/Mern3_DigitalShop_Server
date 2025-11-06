@@ -1,89 +1,60 @@
 import { Sequelize } from "sequelize-typescript";
-import dns from "node:dns/promises";
 import { envConfig } from "../config/config";
+import Product from "./models/productModel";
+import Category from "./models/categoryModel";
+import Order from "./models/orderModel";
+import User from "./models/userModel";
+import Payment from "./models/paymentModel";
+import OrderDetails from "./models/orderDetails";
+import Cart from "./models/cartModel";
 
-// Build a pg connection string that prefers IPv4 and enforces SSL
-async function buildConnectionString(raw: string): Promise<string> {
-  const url = new URL(raw);
+const sequelize = new Sequelize(envConfig.connectionString as string, {
+  models: [__dirname + "/models"],
+});
 
-  // Force IPv4 by resolving the hostname to an A record
-  const { address } = await dns.lookup(url.hostname, { family: 4 });
-  url.hostname = address;
-
-  // Ensure SSL is enabled via query param for providers that require it
-  if (!url.searchParams.has("sslmode") && !url.searchParams.has("ssl")) {
-    url.searchParams.set("sslmode", "require");
-  }
-
-  return url.toString();
+try {
+  sequelize
+    .authenticate()
+    .then(() => {
+      console.log("Database connection successful");
+    })
+    .catch((err) => {
+      console.log("DB connection error:", err);
+    });
+} catch (error) {
+  console.log(error);
 }
 
-let sequelize: Sequelize; // will be created in initDB()
+//RelationShip between Product and Category
+Product.belongsTo(Category, { foreignKey: "categoryId" });
+Category.hasOne(Product, { foreignKey: "categoryId" });
 
-export async function initDB(): Promise<Sequelize> {
-  const connStr = await buildConnectionString(
-    envConfig.connectionString as string
-  );
+//Relation between Order and User
+Order.belongsTo(User, { foreignKey: "userId" });
+User.hasMany(Order, { foreignKey: "userId" });
 
-  sequelize = new Sequelize(connStr, {
-    logging: false,
-    models: [__dirname + "/models"],
-    dialectOptions: {
-      ssl: { require: true, rejectUnauthorized: false },
-    },
-    pool: { max: 10, min: 0, idle: 10_000, acquire: 30_000 },
-  });
+//Relation between Payment and Order
+Order.belongsTo(Payment, { foreignKey: "paymentId" });
+Payment.hasOne(Order, { foreignKey: "paymentId" });
 
-  // --- Associations (keep after models are registered) ---
-  const { default: Product } = await import("./models/productModel");
-  const { default: Category } = await import("./models/categoryModel");
-  const { default: Order } = await import("./models/orderModel");
-  const { default: User } = await import("./models/userModel");
-  const { default: Payment } = await import("./models/paymentModel");
-  const { default: OrderDetails } = await import("./models/orderDetails");
-  const { default: Cart } = await import("./models/cartModel");
+//Relation between OrderDetails and Order
+OrderDetails.belongsTo(Order, { foreignKey: "orderId" });
+Order.hasMany(OrderDetails, { foreignKey: "orderId" });
 
-  // Product ↔ Category
-  Product.belongsTo(Category, { foreignKey: "categoryId" });
-  Category.hasOne(Product, { foreignKey: "categoryId" }); // consider hasMany if multiple products per category
+//Relation between OrderDetails and Product
+OrderDetails.belongsTo(Product, { foreignKey: "productId" });
+Product.hasMany(OrderDetails, { foreignKey: "productId" });
 
-  // Order ↔ User
-  Order.belongsTo(User, { foreignKey: "userId" });
-  User.hasMany(Order, { foreignKey: "userId" });
+//Relationship between cart and user
+Cart.belongsTo(User, { foreignKey: "userId" });
+User.hasOne(Cart, { foreignKey: "userId" });
 
-  // Payment ↔ Order
-  Order.belongsTo(Payment, { foreignKey: "paymentId" });
-  Payment.hasOne(Order, { foreignKey: "paymentId" });
+//Relationship between cart and product
+Cart.belongsTo(Product, { foreignKey: "productId" });
+Product.hasMany(Cart, { foreignKey: "productId" });
 
-  // OrderDetails ↔ Order
-  OrderDetails.belongsTo(Order, { foreignKey: "orderId" });
-  Order.hasMany(OrderDetails, { foreignKey: "orderId" });
-
-  // OrderDetails ↔ Product
-  OrderDetails.belongsTo(Product, { foreignKey: "productId" });
-  Product.hasMany(OrderDetails, { foreignKey: "productId" });
-
-  // Cart ↔ User
-  Cart.belongsTo(User, { foreignKey: "userId" });
-  User.hasOne(Cart, { foreignKey: "userId" });
-
-  // Cart ↔ Product
-  Cart.belongsTo(Product, { foreignKey: "productId" });
-  Product.hasMany(Cart, { foreignKey: "productId" });
-
-  // Connect + Sync
-  await sequelize.authenticate();
-  console.log("Database connection successful");
-
-  await sequelize.sync({ force: false, alter: false });
+sequelize.sync({ force: false, alter: false }).then(() => {
   console.log("Migrated!!!");
+});
 
-  return sequelize;
-}
-
-// Optional getter if you need direct access after init
-export function getSequelize(): Sequelize {
-  if (!sequelize)
-    throw new Error("Sequelize not initialized. Call initDB() first.");
-  return sequelize;
-}
+export default sequelize;

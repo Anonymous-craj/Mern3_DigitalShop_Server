@@ -13,18 +13,16 @@ import cartRoute from "./routes/cartRoute";
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-      "http://localhost:3000",
-      "https://digital-shop-blond.vercel.app",
-    ],
+    origin: process.env.CORS_ORIGIN?.split(",") || "*",
+    credentials: false, // set to true only if you use cookies
+    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   })
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// http://localhost:8000
+// http://localhost:3000
 app.use("/api", userRoute);
 app.use("/api/category", categoryRoute);
 app.use("/api/product", productRoute);
